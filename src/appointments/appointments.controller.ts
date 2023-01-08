@@ -11,15 +11,16 @@ import {
 
 import { AppointmentService } from './appointments.service';
 import { CreateAppointmentDto } from './dto/create-appointment.dto';
+import { FindByDayParameterDto } from './dto/find-by-day-parameter.dto';
 import { UpdateAppointmentDto } from './dto/update-appointment.dto';
 
 @Controller('appointments')
 export class AppointmentsController {
   constructor(private readonly appointmentsService: AppointmentService) {}
 
-  @Get()
-  findAllByDay(@Query('startDate') day: string) {
-    return this.appointmentsService.findAllByDay(day);
+  @Get('byDay')
+  findAllByDay(@Query() params: FindByDayParameterDto) {
+    return this.appointmentsService.findAllByDay(params.day);
   }
   @Post()
   create(@Body() createAppointmentDto: CreateAppointmentDto) {

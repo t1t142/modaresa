@@ -74,11 +74,19 @@ export class AppointmentService {
   private async areVendorAndBuyerExist(
     createAppointmentDto: CreateAppointmentDto,
   ) {
-    await this.prisma.buyer.findUniqueOrThrow({
-      where: { id: createAppointmentDto.buyerId },
-    });
+    await this.isBuyerExist(createAppointmentDto);
+    await this.isVendorExist(createAppointmentDto);
+  }
+
+  private async isVendorExist(createAppointmentDto: CreateAppointmentDto) {
     await this.prisma.vendor.findUniqueOrThrow({
       where: { id: createAppointmentDto.hostId },
+    });
+  }
+
+  private async isBuyerExist(createAppointmentDto: CreateAppointmentDto) {
+    await this.prisma.buyer.findUniqueOrThrow({
+      where: { id: createAppointmentDto.buyerId },
     });
   }
 

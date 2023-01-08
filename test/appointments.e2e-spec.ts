@@ -25,6 +25,7 @@ describe('AppointmentsEndPoints', () => {
   const expectedStartTimeOutOfRange = '2023-01-06T14:50z';
   const expectedEndTimeOutOfRange = '2023-01-06T15:50z';
   const appointmentUrl = '/appointments';
+  const existingAppointmentInDb = 4;
   beforeAll(async () => {
     const moduleRef = await Test.createTestingModule({
       imports: [AppointmentModule],
@@ -137,7 +138,18 @@ describe('AppointmentsEndPoints', () => {
       },
     });
   });
+  describe('retrieve appointment', () => {
+    it('should return all appointement for a specific day', () => {
+      return request(app.getHttpServer())
+        .get(`${appointmentUrl}/byDay?startDate=${expectedStartTime}`)
 
+        .expect((res: request.Response) => {
+          const message = res.body;
+          expect(message.length).toEqual(existingAppointmentInDb);
+        })
+        .expect(HttpStatus.OK);
+    });
+  });
   describe('appointment creation', () => {
     it('should not create appointment with missing data', () => {
       return request(app.getHttpServer())
@@ -263,5 +275,11 @@ describe('AppointmentsEndPoints', () => {
         .expect(HttpStatus.CREATED);
     });
   });
-  afterAll(() => app.close());
+  afterAll(async () => {
+    await prisma.appointment.deleteMany();
+    await prisma.vendor.deleteMany();
+    await prisma.buyer.deleteMany();
+    await prisma.company.deleteMany();
+    app.close();
+  });
 });
