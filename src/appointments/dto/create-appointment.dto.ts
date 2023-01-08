@@ -1,10 +1,5 @@
-import {
-  IsDateString,
-  IsEnum,
-  IsInt,
-  IsNotEmpty,
-  ValidateIf,
-} from 'class-validator';
+import { Transform } from 'class-transformer';
+import { IsDate, IsEnum, IsInt, IsNotEmpty, ValidateIf } from 'class-validator';
 import { Type } from '../enum/type.enum';
 
 export class CreateAppointmentDto {
@@ -23,8 +18,10 @@ export class CreateAppointmentDto {
   @ValidateIf((c) => c.type === Type.VIRTUAL)
   @IsNotEmpty()
   declare link?: string;
-  @IsDateString()
-  declare startTime: string;
-  @IsDateString()
-  declare endTime: string;
+  @IsDate()
+  @Transform(({ value }) => (value ? new Date(value) : null))
+  declare startTime: Date;
+  @IsDate()
+  @Transform(({ value }) => (value ? new Date(value) : null))
+  declare endTime: Date;
 }

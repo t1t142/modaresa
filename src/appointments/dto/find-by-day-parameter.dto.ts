@@ -1,6 +1,8 @@
-import { IsDateString } from 'class-validator';
+import { Transform } from 'class-transformer';
+import { IsDate } from 'class-validator';
 
 export class FindByDayParameterDto {
-  @IsDateString()
-  day: string;
+  @IsDate()
+  @Transform(({ value }) => (value ? new Date(value) : null))
+  day: Date;
 }

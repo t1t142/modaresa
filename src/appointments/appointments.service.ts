@@ -13,13 +13,54 @@ export class AppointmentService {
     return this.persistAppointment(createAppointmentDto);
   }
 
+  findAllByDay(date: Date) {
+    date.setHours(0, 0, 0);
+    const start = new Date(date);
+    date.setHours(23, 59, 59);
+    const end = new Date(date);
+    return this.prisma.appointment.findMany({
+      where: { startTime: { gte: start, lte: end } },
+    });
+  }
+
+  async update(id: number, updateAppointmentDto: UpdateAppointmentDto) {
+    const appointment = await this.prisma.appointment.findFirstOrThrow({
+      where: { id },
+    });
+    delete appointment.id;
+    if (updateAppointmentDto.startTime || updateAppointmentDto.endTime) {
+      const appointmentWithNewSchedule: CreateAppointmentDto = {
+        ...appointment,
+        startTime: updateAppointmentDto.startTime
+          ? updateAppointmentDto.startTime
+          : appointment.startTime,
+        endTime: updateAppointmentDto.endTime
+          ? updateAppointmentDto.endTime
+          : appointment.endTime,
+      } as CreateAppointmentDto;
+      await this.FindExistingAppointmentwWithOverlaps(
+        appointmentWithNewSchedule,
+      );
+    }
+    if (updateAppointmentDto.buyerId) {
+      await this.isBuyerExist;
+    }
+    if (updateAppointmentDto.hostId) {
+      await this.isVendorExist;
+    }
+    return await this.prisma.appointment.update({
+      where: { id },
+      data: updateAppointmentDto,
+    });
+  }
+
+  async remove(id: number) {
+    await this.prisma.appointment.findFirstOrThrow({ where: { id } });
+    return this.prisma.appointment.delete({ where: { id } });
+  }
   private persistAppointment(createAppointmentDto: CreateAppointmentDto) {
     return this.prisma.appointment.create({
-      data: {
-        ...createAppointmentDto,
-        startTime: new Date(createAppointmentDto.startTime),
-        endTime: new Date(createAppointmentDto.endTime),
-      },
+      data: createAppointmentDto,
     });
   }
 
@@ -40,14 +81,14 @@ export class AppointmentService {
               OR: [
                 {
                   startTime: {
-                    lte: new Date(createAppointmentDto.endTime),
-                    gte: new Date(createAppointmentDto.endTime),
+                    lte: createAppointmentDto.endTime,
+                    gte: createAppointmentDto.startTime,
                   },
                 },
                 {
                   endTime: {
-                    lte: new Date(createAppointmentDto.endTime),
-                    gte: new Date(createAppointmentDto.endTime),
+                    lte: createAppointmentDto.endTime,
+                    gte: createAppointmentDto.startTime,
                   },
                 },
               ],
@@ -62,12 +103,7 @@ export class AppointmentService {
       ) {
         throw new BuisnessError('Buyer have already an appointment');
       }
-      if (
-        existingAppointmentwWithOverlaps[0].hostId ===
-        createAppointmentDto.hostId
-      ) {
-        throw new BuisnessError('Vendor have already an appointment');
-      }
+      throw new BuisnessError('Vendor have already an appointment');
     }
   }
 
@@ -88,24 +124,5 @@ export class AppointmentService {
     await this.prisma.buyer.findUniqueOrThrow({
       where: { id: createAppointmentDto.buyerId },
     });
-  }
-
-  findAllByDay(day: string) {
-    const date = new Date(day);
-    date.setHours(0, 0, 0);
-    const start = new Date(date);
-    date.setHours(23, 59, 59);
-    const end = new Date(date);
-    return this.prisma.appointment.findMany({
-      where: { startTime: { gte: start, lte: end } },
-    });
-  }
-
-  update(id: number, updateAppointmentDto: UpdateAppointmentDto) {
-    return `This action updates a #${id} appointment`;
-  }
-
-  remove(id: number) {
-    return `This action removes a #${id} appointment`;
   }
 }
